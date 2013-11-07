@@ -24,17 +24,17 @@ def extract_betas(folder, meth_file, probes='All', outfile='beta_values.txt'):
     if probes != 'All':
         target_file = 'picked.txt'
         query = '\\|'.join(['Hybridization REF'] + list(probes))
-        call(['grep', query, meth_file], 
-             stdout=open(target_file,'wb'))
+        call(['grep', query, meth_file],
+             stdout=open(target_file, 'wb'))
     else:
         target_file = meth_file
     cols = check_output(['awk', '-F\t', '{print NF; exit}', target_file])
     cols = int(cols.strip())
-    cols = ','.join(map(str, range(2, int(cols)+1,4)))
+    cols = ','.join(map(str, range(2, int(cols) + 1, 4)))
     
-    call(['cut', '-f' + cols, target_file], stdout=open('tmp','wb'))
-    call(['cut', '-f1,3', target_file], stdout=open('idx','wb'))
-    call(['paste', 'idx', 'tmp', '-d\t'], stdout=open(outfile,'wb'))
+    call(['cut', '-f' + cols, target_file], stdout=open('tmp', 'wb'))
+    call(['cut', '-f1,3', target_file], stdout=open('idx', 'wb'))
+    call(['paste', 'idx', 'tmp', '-d\t'], stdout=open(outfile, 'wb'))
     call(['rm', 'tmp', 'idx'])
     
     os.chdir(curdir)
@@ -47,13 +47,13 @@ def peel_pc(df):
     beta values.
     '''
     try:
-        r = extract_pc(df-.5)
-        l,r,p = r['gene_vec'], r['pat_vec'], r['pct_var']
+        r = extract_pc(df - .5)
+        l, r, p = r['gene_vec'], r['pat_vec'], r['pct_var']
         mean = df.mean(1)
         if l.corr(mean) < 0:
-            l = l*-1
-            r = r*-1
-        return l,r,p
+            l = l * -1
+            r = r * -1
+        return l, r, p
     except:
         r = df.mean()
         return np.nan, r, np.nan
@@ -73,7 +73,7 @@ def process_meth(data_path, cancer, probeset='All'):
     outpath = '{}/ucsd_processing/{}/methylation450/'.format(data_path, cancer)
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
-    if os.path.isfile(outpath + 'meta_probes.csv'): #file already exists
+    if os.path.isfile(outpath + 'meta_probes.csv'):  # file already exists
         return
     outfile = outpath + ('beta_values.txt' if probeset == 'All' else 
                          'beta_values_picked.txt')
@@ -89,7 +89,7 @@ def process_meth(data_path, cancer, probeset='All'):
     for g in table.index.levels[0]:
         loadings[g], meta_probes[g], pct_var[g] = peel_pc(table.ix[g])
     
-    loadings = {k:v for k,v in loadings.iteritems() if type(v) == pd.Series}
+    loadings = {k:v for k, v in loadings.iteritems() if type(v) == pd.Series}
     loadings = pd.concat(loadings.values(), keys=loadings.keys())
     meta_probes = pd.DataFrame(meta_probes).T
     pct_var = pd.Series(pct_var)

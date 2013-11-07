@@ -27,10 +27,10 @@ def get_beta_values(data_path, cancer, patients=None, tissue_code='All'):
     '''
     path = '{}/ucsd_processing/{}/methylation450/'.format(data_path, cancer)
     t = pd.read_table(path + 'beta_values.txt', skiprows=[1], index_col=[0])
-    t = t.rename(columns=lambda s: s if s!=t.columns[0] else 'symbol')
+    t = t.rename(columns=lambda s: s if s != t.columns[0] else 'symbol')
     t = t.set_index('symbol', append=True)
-    t = t.swaplevel(0,1)
-    t = t.sort_index() #think this is a bug that it needs to be sorted
+    t = t.swaplevel(0, 1)
+    t = t.sort_index()  # think this is a bug that it needs to be sorted
     t = FH.fix_barcode_columns(t, patients, tissue_code)
     return t
 
@@ -46,16 +46,16 @@ def read_methylation(data_path, cancer, patients=None, tissue_code='01'):
     data_types = filter(lambda f: f[:11] == 'methylation', os.listdir(path))
     data_type = sorted([d for d in data_types 
                         if os.path.isfile(path + d + '/meta_probes.csv')])[-1]
-    meth = pd.read_csv(path +  data_type + '/meta_probes.csv', index_col=0)
+    meth = pd.read_csv(path + data_type + '/meta_probes.csv', index_col=0)
     ft = pd.MultiIndex.from_tuples
-    meth.columns = ft(map(lambda s: eval(s,{},{}), meth.columns))
+    meth.columns = ft(map(lambda s: eval(s, {}, {}), meth.columns))
     
     if patients is not None:
-        meth  = meth.ix[:, patients]
+        meth = meth.ix[:, patients]
     meth = meth.astype(np.float)
     meth = meth.dropna(how='all')
     if tissue_code != 'All':
-        meth = meth.T.xs(tissue_code, level=1).T #pandas bug
+        meth = meth.T.xs(tissue_code, level=1).T  # pandas bug
     return meth
 
 def rna_filter(cn, val, rna):
@@ -70,13 +70,13 @@ def rna_filter(cn, val, rna):
     '''
     assert val in [-2, -1, 1, 2]
     change = pd.DataFrame({g: kruskal_pandas(vec == val, rna.ix[g[-1]])
-                           for g,vec in cn.iterrows() 
+                           for g, vec in cn.iterrows() 
                            if g[-1] in rna.index}).T
     q_vals = bhCorrection(change.p)
     filtered = cn.ix[true_index(q_vals < .1)]
     return filtered
 
-def get_gistic_genes(data_path, cancer, filter_with_rna=True, 
+def get_gistic_genes(data_path, cancer, filter_with_rna=True,
                      collapse_on_bands=True, min_patients=5):
     '''
     Gets a matrix of events for high grade amplifications and homozygous 
@@ -89,7 +89,7 @@ def get_gistic_genes(data_path, cancer, filter_with_rna=True,
     gistic = FH.get_gistic_gene_matrix(data_path, cancer, '01')
     deletion = gistic[(gistic == -2).sum(1) > min_patients]
     amp = gistic[(gistic == 2).sum(1) > min_patients]
-    ft = pd.MultiIndex.from_tuples #rediculously long pandas names
+    ft = pd.MultiIndex.from_tuples  # rediculously long pandas names
     deletion.index = ft([('Deletion', s[0], s[2]) for s in deletion.index])
     amp.index = ft([('Amplification', s[0], s[2]) for s in amp.index])
     
@@ -103,18 +103,18 @@ def get_gistic_genes(data_path, cancer, filter_with_rna=True,
         return cna_genes
     
     cna_genes = pd.DataFrame({(a[0], a[1], tuple(b.index.get_level_values(2))): 
-                           b.mean().round() for a,b in 
-                           cna_genes.groupby(level=[0,1])}).T
+                           b.mean().round() for a, b in 
+                           cna_genes.groupby(level=[0, 1])}).T
     cna_genes.index = pd.MultiIndex.from_tuples(cna_genes.index)
     return cna_genes
 
-def get_gistic(data_path, cancer, filter_with_rna=True, 
+def get_gistic(data_path, cancer, filter_with_rna=True,
                collapse_on_bands=True, min_patients=5):
     '''
     Get the combined GISTIC feature matrix for testing. 
     '''
     lesions = FH.get_gistic_lesions(cancer, data_path)
-    cna_genes = get_gistic_genes(data_path, cancer, filter_with_rna, 
+    cna_genes = get_gistic_genes(data_path, cancer, filter_with_rna,
                                  collapse_on_bands, min_patients)
     cna = cna_genes.append(lesions)
     return cna
@@ -136,12 +136,12 @@ def build_meta_matrix(gene_sets, gene_matrix, min_size=4, set_filter=None):
     if not isinstance(gene_sets, dict):
         gene_sets = dict(list(enumerate(gene_sets)))
     meta_matrix = pd.DataFrame({group: gene_matrix.ix[genes].sum(0) 
-                                for group,genes in gene_sets.items()})
+                                for group, genes in gene_sets.items()})
     if set_filter is not None: 
         meta_matrix = meta_matrix.apply(set_filter, axis=0)
-    keepers = meta_matrix.sum().isin(range(min_size, 
+    keepers = meta_matrix.sum().isin(range(min_size,
                                            len(meta_matrix) - min_size))
-    meta_matrix = meta_matrix.ix[:,keepers].T
+    meta_matrix = meta_matrix.ix[:, keepers].T
     return meta_matrix
 
 def get_mutation_rates(data_path, cancer, patients=None):
@@ -161,19 +161,19 @@ def get_mutation_rates(data_path, cancer, patients=None):
     rates = rates[['rate_dbsnp', 'rate_sil', 'rate_non']]
     
     maf = pd.read_table(path + 'final_analysis_set.maf')
-    maf = maf.dropna(how='all', axis=[0,1])
-    barcode = 'Tumor_Sample_Barcode'  #long Firehose variable names
+    maf = maf.dropna(how='all', axis=[0, 1])
+    barcode = 'Tumor_Sample_Barcode'  # long Firehose variable names
     maf[barcode] = maf[barcode].map(lambda s: s[:12])
-    maf = maf.set_index(['Hugo_Symbol','Tumor_Sample_Barcode'])
+    maf = maf.set_index(['Hugo_Symbol', 'Tumor_Sample_Barcode'])
     non_silent = maf[maf.is_silent == 0]
     df = pd.DataFrame({pat: df.categ.value_counts() for pat, df in 
                     non_silent.groupby(level=1)}).T
     labels = pd.read_table(path + 'mutation_rates.txt')
     df = df.fillna(0)
-    df = df.rename(columns=lambda s: labels.category[s-1])
+    df = df.rename(columns=lambda s: labels.category[s - 1])
     pct = (df.T / df.sum(1)).T 
     rates = rates.join(pct)
-    rates = rates.rename(columns=lambda s: s.replace('/','_'))
+    rates = rates.rename(columns=lambda s: s.replace('/', '_'))
     if patients is not None:
         rates = rates.ix[patients].dropna()
     return rates
@@ -199,9 +199,9 @@ def get_cna_rates(data_path, cancer, patients=None):
     arm_cn = FH.get_gistic_arm_values(data_path, cancer)
     chromosomal_instability = arm_cn.abs().mean()
     
-    cna_df = {'gene_amp': amp_gene_all, 'gene_amp_high': amp_gene_high, 
-              'gene_del': del_gene_all, 'gene_del_homo': del_gene_homo, 
-              'lesion_amp': amp_lesion_all, 'lesion_amp_high': amp_lesion_high, 
+    cna_df = {'gene_amp': amp_gene_all, 'gene_amp_high': amp_gene_high,
+              'gene_del': del_gene_all, 'gene_del_homo': del_gene_homo,
+              'lesion_amp': amp_lesion_all, 'lesion_amp_high': amp_lesion_high,
               'lesion_del': del_lesion_all, 'lesion_del_homo': del_lesion_homo,
               'chrom_instability': chromosomal_instability}
     cna_df = pd.DataFrame(cna_df)
@@ -230,8 +230,8 @@ def get_global_vars(data_path, cancer, patients=None):
         meth_pc = pd.DataFrame()
         
     try:
-        meth_age, amar = 'FAIL','FAIL'
-        #meth_age, amar = get_age_signal(data_path, cancer) 
+        meth_age, amar = 'FAIL', 'FAIL'
+        # meth_age, amar = get_age_signal(data_path, cancer) 
         meth_pc = meth_pc.join(meth_age).join(amar)
         print 'Should probably check this out'
     except:
@@ -240,8 +240,8 @@ def get_global_vars(data_path, cancer, patients=None):
     cna_rates = get_cna_rates(data_path, cancer, patients)
     mutation_rates = get_mutation_rates(data_path, cancer, patients)
     
-    gv = pd.concat([exp_pc, meth_pc, cna_rates, mutation_rates], 
-                    keys=['mRNASeq','methylation', 'cna', 'mutation'], axis=1)
+    gv = pd.concat([exp_pc, meth_pc, cna_rates, mutation_rates],
+                    keys=['mRNASeq', 'methylation', 'cna', 'mutation'], axis=1)
     gv = gv.dropna(how='all', axis=1)
     return gv
 

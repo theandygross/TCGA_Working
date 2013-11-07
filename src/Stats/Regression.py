@@ -12,13 +12,13 @@ from pandas.rpy.common import convert_to_r_dataframe
 lm = robjects.r.lm
 base = robjects.packages.importr('base')
 
-robjects.r.options(warn=-1);
+robjects.r.options(warn= -1);
 zz = robjects.r.file("all.Rout", open="wt")
 robjects.r.sink(zz, type='message')
 
 def sanitize_for_r(f):
     s = f.name
-    s = s.replace(':','_').replace('(','_').replace(')','_').replace('-','_')
+    s = s.replace(':', '_').replace('(', '_').replace(')', '_').replace('-', '_')
     return pd.Series(f, name=s)
 
 def process_factors(cov):
@@ -33,7 +33,7 @@ def process_factors(cov):
         cov = pd.concat(cov, axis=1)
         
     
-    c_real = cov.ix[:,cov.dtypes.isin([np.dtype(float), np.dtype(int)])]
+    c_real = cov.ix[:, cov.dtypes.isin([np.dtype(float), np.dtype(int)])]
     c_real = (c_real - c_real.mean()) / c_real.std()
     cov[c_real.columns] = c_real
     df = cov

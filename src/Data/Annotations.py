@@ -10,10 +10,10 @@ import pandas as pd
 GENE_POS = pd.read_csv('/cellar/users/agross/Data/GeneSets/HGNC_chr_pos.txt')
 GENE_LIST_FILE = '/cellar/users/agross/Data/GeneSets/HGNC_Genes'
 GENES = open(GENE_LIST_FILE, 'rb').read().split('\n')
-COM = {'T':'A','A':'T','G':'C','C':'G'}
-BASE_CHANGES = ['C>T','C>A','C>G','A>G','A>T','A>C']
-COLUMNS = ['reference_allele','tumor_seq_allele1', 'tumor_seq_allele2',
-           'entrez_gene_id', 'chromosome','start_position', 'variant_type',
+COM = {'T':'A', 'A':'T', 'G':'C', 'C':'G'}
+BASE_CHANGES = ['C>T', 'C>A', 'C>G', 'A>G', 'A>T', 'A>C']
+COLUMNS = ['reference_allele', 'tumor_seq_allele1', 'tumor_seq_allele2',
+           'entrez_gene_id', 'chromosome', 'start_position', 'variant_type',
            'variant_classification']
 
 def read_in_pathways(mSigDbFile):
@@ -31,10 +31,10 @@ def read_in_pathways(mSigDbFile):
     geneSets = {}
     genes = []
     for line in f:
-        line = line.replace('\"','')
+        line = line.replace('\"', '')
         tmp = line.strip().split("\t")
-        setName  = tmp[0]
-        geneSets[setName]= set(tmp[2:])
+        setName = tmp[0]
+        geneSets[setName] = set(tmp[2:])
         genes.extend(tmp[2:])
     f.close()
     genes = set(genes)
@@ -65,21 +65,20 @@ def map_splice_junction_to_gene(j):
         return '?'
     return lu.iloc[0].ix['HGNC symbol']
 
-'''
+"""
 MutationBaseChange
 -------------------
-Need to fix code or cut...
-'''
+"""
 def good_mut(s):
     return ((s['variant_type'] in ['SNP']) & 
             (s['variant_classification'] not in ['Silent', 'RNA']) & 
             (s.name in GENES))
     
 def get_base_change(s):
-    s = s[['reference_allele','tumor_seq_allele1', 'tumor_seq_allele2']]
+    s = s[['reference_allele', 'tumor_seq_allele1', 'tumor_seq_allele2']]
     if s[0] not in list('ATCG'):
         return np.nan
-    cols = s[[0,1]] if s[0] != s[1] else s[[0,2]]
+    cols = s[[0, 1]] if s[0] != s[1] else s[[0, 2]]
     return '>'.join(cols)
 
 def get_base_change_matrix(mutation_dir):
@@ -90,7 +89,7 @@ def get_base_change_matrix(mutation_dir):
         tab = pd.read_table(mutation_dir + f, index_col=0)
         tab = tab.select(lambda c: c.lower() in COLUMNS, axis=1)
         tab = tab.rename(columns=str.lower)
-        id_cols = ['entrez_gene_id', 'chromosome','start_position']
+        id_cols = ['entrez_gene_id', 'chromosome', 'start_position']
         tab = tab.drop_duplicates(cols=id_cols)
         tab = tab[tab.apply(good_mut, axis=1)]
         tab = tab.apply(get_base_change, axis=1)

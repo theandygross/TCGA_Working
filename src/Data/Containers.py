@@ -1,8 +1,8 @@
-'''
+"""
 Created on Jan 28, 2013
 
 @author: agross
-'''
+"""
 
 import os as os
 import pickle as pickle
@@ -12,25 +12,28 @@ import pandas as pd
 import numpy as np
 
 from Data.ProcessClinical import get_clinical
-import Data.Intermediate as IM
-import Data.Annotations as AN
+from Data.Annotations import read_in_pathways
 from Processing.Helpers import make_path_dump
 
-def tree(): return defaultdict(tree)
+
+def tree():
+    return defaultdict(tree)
+
 
 class Run(object):
-    '''
+    """
     Object for storing meta-data and functions for dealing with Firehose runs.
     Entry level for loading data from pre-processed dumps in the ucsd_analyses
     file tree.
-    '''
+    """
     
-    def __init__(self, date, version, data_path, result_path, parameters, 
+    def __init__(self, date, version, data_path, result_path, parameters,
                  cancer_codes, sample_matrix, description=''):
         self.date = date
         self.data_path = data_path
         self.version = version
         self.result_path = result_path
+        self.report_path = './'
         self.parameters = parameters
         self.dependency_tree = tree()
         self.description = description
@@ -40,9 +43,13 @@ class Run(object):
         self.data_types = np.array(self.sample_matrix.columns)
         if 'pathway_file' in parameters:
             self._init_gene_sets(parameters['pathway_file'])
+
+        self.gene_sets = {}
+        self.gene_lookup = {}
+        self.genes = np.array([])
         
     def _init_gene_sets(self, gene_set_file):
-        self.gene_sets, self.gene_lookup = AN.read_in_pathways(gene_set_file)
+        self.gene_sets, self.gene_lookup = read_in_pathways(gene_set_file)
         self.genes = np.array(self.gene_lookup.keys())
               
     def __repr__(self):
@@ -60,13 +67,14 @@ class Run(object):
     
     def save(self):
         self.report_path = (self.result_path + 'Run_' + 
-                            self.version.replace('.','_'))
+                            self.version.replace('.', '_'))
         make_path_dump(self, self.report_path + '/RunObject.p')
+
         
 def get_run(firehose_dir, version='Latest'):
-    '''
+    """
     Helper to get a run from the file-system. 
-    '''
+    """
     path = '{}/ucsd_analyses'.format(firehose_dir)
     if version is 'Latest':
         version = sorted(os.listdir(path))[-1]
@@ -85,6 +93,7 @@ class Cancer(object):
         self.samples = counts[counts > 0]
         self.data_types = np.array(self.samples.index)
         self.run_path = run.report_path
+        self.path = './'
     
     def load_clinical(self):
         assert hasattr(self, 'path')
@@ -97,7 +106,7 @@ class Cancer(object):
         path = '/'.join([self.path, 'Global_Vars.csv'])
         df = pd.read_csv(path, index_col=0)
         ft = pd.MultiIndex.from_tuples
-        df.columns = ft(map(lambda s: eval(s,{},{}), df.columns))
+        df.columns = ft(map(lambda s: eval(s, {}, {}), df.columns))
         return df
     
     def load_data(self, data_type):
@@ -112,17 +121,17 @@ class Cancer(object):
     def initialize_data(self, run, save=False, get_vars=False):
         clinical = Clinical(self, run)
         clinical.artificially_censor(5)
-        #global_vars = IM.get_global_vars(run.data_path, self.name)
-        #global_vars = global_vars.groupby(level=0).first()
+        # global_vars = IM.get_global_vars(run.data_path, self.name)
+        # global_vars = global_vars.groupby(level=0).first()
         
         if save is True:
             self.save()
             clinical.save()
-            #global_vars.to_csv(self.path + '/Global_Vars.csv') 
+            # global_vars.to_csv(self.path + '/Global_Vars.csv') 
         
         if get_vars is True:
             return clinical
-            #return clinical, global_vars        
+            # return clinical, global_vars        
     
     def save(self):
         self.path = '{}/{}'.format(self.run_path, self.name)
@@ -131,23 +140,30 @@ class Cancer(object):
     
 class Clinical(object):
     def __init__(self, cancer, run, patients=None):
+        """
+
+        :param cancer: Cancer object
+        :param run: Run object
+        :param patients: list of patients to filter down to (optional)
+        """
         self.cancer = cancer.name
         self.run_path = run.report_path
+        self.path = './'
         
         tup = get_clinical(cancer.name, run.data_path, patients)
         (self.clinical, self.drugs, self.followup, self.stage,
          self.timeline, self.survival) = tup
-        
+
     def __repr__(self):
         return 'Clinical Object for ' + self.cancer
         
     def artificially_censor(self, years):
-        for n,s in self.survival.iteritems():
+        for n, s in self.survival.iteritems():
             if n.endswith('y'):
                 continue
             df = s.unstack().copy()
-            df['event'] = df.event * (df.days < int(365.25*years))
-            df['days'] = df.days.clip_upper(int((365.25*years)))
+            df['event'] = df.event * (df.days < int(365.25 * years))
+            df['days'] = df.days.clip_upper(int((365.25 * years)))
             self.survival[n + '_' + str(years) + 'y'] = df.stack()
             
     def save(self):
@@ -160,6 +176,7 @@ class Clinical(object):
         self.timeline.to_csv(self.path + '/Clinical/timeline.csv')
         self.clinical.to_csv(self.path + '/Clinical/clinical.csv')
 
+
 def patient_filter(df, can):
     if can.patients is not None:
         return df[[p for p in df.columns if p in can.patients]]
@@ -167,12 +184,18 @@ def patient_filter(df, can):
         return df[[p for p in df.columns if p not in can.filtered_patients]]
     else:
         return df           
-    
+
+
 class Dataset(object):
     def __init__(self, cancer_path, data_type, compressed=True):
         self.data_type = data_type  
         self.path = '{}/{}'.format(cancer_path, data_type)
         self.compressed = compressed
+
+        self.patients = []
+        self.df = None
+        self.features = None
+        self.compressed = False
         return
         
     def compress(self):
@@ -192,10 +215,9 @@ class Dataset(object):
         self.compressed = False
         
     def save(self):
-        if self.compressed == False:
+        if self.compressed is False:
             self.compress()
         make_path_dump(self, self.path + '/DataObject.p')
             
     def __repr__(self):
         return self.data_type + ' dataset'
-            

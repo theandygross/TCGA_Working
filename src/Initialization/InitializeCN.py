@@ -21,7 +21,7 @@ class CNDataset(Dataset):
         Dataset.__init__(self, cancer.path, cn_type, compressed=False)
         min_pat = run.parameters['min_patients']
         if cn_type == 'CN_broad':
-            self.df = FH.get_gistic(run.data_path, cancer.name, 
+            self.df = FH.get_gistic(run.data_path, cancer.name,
                                     min_patients=min_pat)
             if patients is not None:
                 self.df = self.df.ix[:, patients].dropna(1, how='all')

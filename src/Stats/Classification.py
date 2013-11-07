@@ -30,9 +30,9 @@ def SVC_fill_old(feature, df):
     
     params = [{'kernel': ['rbf'], 'gamma': [0, .1, .05, .01, 1e-3, 1e-4, 1e-5],
                'C': [.1, 1, 10, 100, 1000], 'class_weight': ['auto']},
-              {'kernel': ['linear'], 'C': [1, 10, 100, 1000], 
+              {'kernel': ['linear'], 'C': [1, 10, 100, 1000],
                'class_weight': ['auto']},
-              {'kernel': ['poly'],  'C': [1, 10, 100, 1000], 
+              {'kernel': ['poly'], 'C': [1, 10, 100, 1000],
                'class_weight': ['auto']}]
     
     clf = GridSearchCV(SVC(C=1), params, score_func=auc_score)
@@ -43,7 +43,7 @@ def SVC_fill_old(feature, df):
     mat_all = gg.ix[mat.index].T.as_matrix()
     inferred = best.predict(mat_all)
     inferred = pd.Series(inferred, index=gg.columns)
-    fun = pd.Series(best.decision_function(mat_all)[:,0], mat.columns)
+    fun = pd.Series(best.decision_function(mat_all)[:, 0], mat.columns)
     f = feature.copy()
     f = f.ix[inferred.index]
     f[f.isnull()] = inferred[f.isnull()]
@@ -78,7 +78,7 @@ def SVC_fill(feature, df, metric='auc', test_size=.3):
     tuned_parameters = [{'kernel': ['rbf'], 'gamma': [0, .1, .05, .01, 1e-3, 1e-4, 1e-5],
                          'C': [.1, 1, 10, 100, 1000], 'class_weight': ['auto']},
                         {'kernel': ['linear'], 'C': [1, 10, 100, 1000], 'class_weight': ['auto']},
-                        {'kernel': ['poly'],  'C': [1, 10, 100, 1000], 'class_weight': ['auto']}]
+                        {'kernel': ['poly'], 'C': [1, 10, 100, 1000], 'class_weight': ['auto']}]
     
     if metric == 'auc':
         metric = auc_score
@@ -93,7 +93,7 @@ def SVC_fill(feature, df, metric='auc', test_size=.3):
     mat_all = gg.ix[mat.index].T.as_matrix()
     inferred = best.predict(mat_all)
     inferred = pd.Series(inferred, index=gg.columns)
-    fun = pd.Series(best.decision_function(mat_all)[:,0], mat.columns)
+    fun = pd.Series(best.decision_function(mat_all)[:, 0], mat.columns)
     f = feature.copy()
     f = f.ix[inferred.index]
     f[f.isnull()] = inferred[f.isnull()]

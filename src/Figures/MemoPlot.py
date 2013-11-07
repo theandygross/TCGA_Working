@@ -48,7 +48,7 @@ def memo_plot(df, ax=None):
     ax.set_yticklabels(df.index[::-1])
     
     W = df.as_matrix().T[:, ::-1]
-    for (x,y),w in np.ndenumerate(W):
+    for (x, y), w in np.ndenumerate(W):
         if w == 0: 
             rect = null_box(x, y)
         else:     
@@ -57,8 +57,8 @@ def memo_plot(df, ax=None):
             rect = mut_box(x, y) 
         ax.add_patch(rect)
     df
-    ax.set_xbound(-.5, len(W)-.5)
-    ax.set_ybound(-.5, len(W[0])-.5)
+    ax.set_xbound(-.5, len(W) - .5)
+    ax.set_ybound(-.5, len(W[0]) - .5)
     
 def pathway_plot(df, ax=None, bar='both'):
     df = df.ix[df.sum(1) > 0, df.sum() > 0]
@@ -71,17 +71,17 @@ def pathway_plot(df, ax=None, bar='both'):
         df = df.ix[:10]
         df = df.append(rest)
     if ax is None:
-        fig, ax = plt.subplots(figsize=(df.shape[1]*.2,df.shape[0]*.5))
+        fig, ax = plt.subplots(figsize=(df.shape[1] * .2, df.shape[0] * .5))
     else:
         fig = ax.get_figure()
     memo_plot(df, ax=ax)
     if bar in ['x', 'both']:
-        ax.bar(np.arange(len(df.columns)) - .3, 1.*df.sum() / df.sum().max(), 
-               bottom=-1.5, width=.6, alpha=.5)
+        ax.bar(np.arange(len(df.columns)) - .3, 1.*df.sum() / df.sum().max(),
+               bottom= -1.5, width=.6, alpha=.5)
     if bar in ['y', 'both']:
         counts = df.sum(1)[::-1]
         width = df.shape[1]
-        ax.barh(np.arange(len(counts)) - .3, (1.*counts / counts.max())*width*.25, 
+        ax.barh(np.arange(len(counts)) - .3, (1.*counts / counts.max()) * width * .25,
                 left=width - .2, height=.6, alpha=.5)
         
     ax.set_frame_on(False)
@@ -90,12 +90,12 @@ def pathway_plot(df, ax=None, bar='both'):
     return df
     
 def draw_pathway_overlaps(mat, bars, filename=None):  
-    fig, ax = plt.subplots(figsize=(25,5))   
+    fig, ax = plt.subplots(figsize=(25, 5))   
     memo_plot(mat, ax=ax)
-    ax.bar(np.arange(len(mat.columns)) - .3, bars, bottom = -2, width=.6, 
+    ax.bar(np.arange(len(mat.columns)) - .3, bars, bottom= -2, width=.6,
            alpha=.5)
     ax.hlines(-1, -.5, len(mat.columns))
-    ax.annotate('Days to Death', (-.5,-1.5), ha='right', va='center', size=15)
+    ax.annotate('Days to Death', (-.5, -1.5), ha='right', va='center', size=15)
     fig.tight_layout()
     if filename is not None:
         fig.savefig(filename)

@@ -14,7 +14,7 @@ import scipy as sp
 colors = plt.rcParams['axes.color_cycle']
 
 def series_scatter(s1, s2, ax=None, ann='p', filename=None, **plot_args):
-    fig, ax = init_ax(ax, figsize=(6,4))
+    fig, ax = init_ax(ax, figsize=(6, 4))
     if 's' not in plot_args:
         plot_args['s'] = 75
     if 'alpha' not in plot_args:
@@ -24,10 +24,10 @@ def series_scatter(s1, s2, ax=None, ann='p', filename=None, **plot_args):
     ax.set_ylabel(s2.name)
     if ann == 'p':
         ax.annotate('p = {0:.1e}'.format(Tests.spearman_pandas(s1, s2)['p']), (.95, -.02),
-                    xycoords='axes fraction', ha='right',va='bottom', size=14)
+                    xycoords='axes fraction', ha='right', va='bottom', size=14)
     if ann == 'fancy_p':
         ax.annotate('$p = {}$'.format(latex_float(Tests.spearman_pandas(s1, s2)['p'])), (.95, -.02),
-                    xycoords='axes fraction', ha='right',va='bottom', size=14)
+                    xycoords='axes fraction', ha='right', va='bottom', size=14)
     if filename is not None:
         fig.savefig(filename)
     
@@ -54,7 +54,7 @@ def histo_compare(hit_vec, response_vec, ax=None):
     ax.legend()
     return fig
 
-def fancy_raster(df, cluster=False, cmap=plt.cm.get_cmap('Spectral'), 
+def fancy_raster(df, cluster=False, cmap=plt.cm.get_cmap('Spectral'),
                  norm=None, ax=None):
     if cluster:
         d = sp.spatial.distance.pdist(df)
@@ -64,24 +64,24 @@ def fancy_raster(df, cluster=False, cmap=plt.cm.get_cmap('Spectral'),
         order = Z['leaves']
         df = df.ix[order, order]
         
-    _, ax = init_ax(ax, figsize=(12,8))
+    _, ax = init_ax(ax, figsize=(12, 8))
     img = ax.imshow(df, interpolation='Nearest', cmap=cmap, norm=norm)
     ax.set_yticks(range(len(df.index)))
     ax.set_yticklabels(df.index)
     ax.set_xticks(np.arange(len(df.columns)))
-    ax.set_xticklabels(df.columns, rotation=360-90, ha='center');
-    ax.hlines(np.arange(len(df.index)-1)+.5, -.5, len(df.columns)-.5, 
+    ax.set_xticklabels(df.columns, rotation=360 - 90, ha='center');
+    ax.hlines(np.arange(len(df.index) - 1) + .5, -.5, len(df.columns) - .5,
               color='white', lw=6)
-    ax.vlines(np.arange(len(df.columns)-1)+.5, -.5, len(df.index)-.5, 
+    ax.vlines(np.arange(len(df.columns) - 1) + .5, -.5, len(df.index) - .5,
               color='white', lw=6)
     
     if cluster:
         icoord = np.array(Z['icoord']) - np.array(Z['icoord']).min()
         icoord = icoord * ((len(Z['leaves']) - 1) / icoord.max())
     
-        dcoord = -1*np.array(Z['dcoord']) - .7 
-        for i,z,c in zip(icoord, dcoord, Z['color_list']):
-            ax.plot(i,z,color=c, lw=2, alpha=.8)
+        dcoord = -1 * np.array(Z['dcoord']) - .7 
+        for i, z, c in zip(icoord, dcoord, Z['color_list']):
+            ax.plot(i, z, color=c, lw=2, alpha=.8)
             
         ax.tick_params(axis='x', top='off')
         ax.set_frame_on(False)
@@ -93,11 +93,11 @@ def count_plot(vec, name=None, ax=None):
     ax.set_ylabel('# of Patients')
     ax.set_xlabel(name if name is not None else vec.name)
 
-def venn_pandas_o(a,b):
+def venn_pandas_o(a, b):
     from matplotlib_venn import venn2
     
     colors = plt.rcParams['axes.color_cycle']
-    gc = pd.concat([a,b], axis=1).dropna().astype(int).astype(str).apply(lambda s: ''.join(s), axis=1)
+    gc = pd.concat([a, b], axis=1).dropna().astype(int).astype(str).apply(lambda s: ''.join(s), axis=1)
     v = venn2(gc.value_counts().sort_index()[1:], set_labels=[b.name, a.name], normalize_to=1.)
     v.patches[0].set_facecolor(colors[0])
     v.patches[1].set_facecolor(colors[2])
@@ -106,12 +106,12 @@ def venn_pandas_o(a,b):
     v.patches[1].set_alpha(.7)
     v.patches[2].set_alpha(.7)
     
-def venn_pandas(a,b, colors=None, alpha=.7):
+def venn_pandas(a, b, colors=None, alpha=.7):
     from matplotlib_venn import venn2
     
     if colors is None:
-        colors = np.array(plt.rcParams['axes.color_cycle'])[[0,2,4]]
-    gc = pd.concat([a,b], axis=1).dropna().astype(int).astype(str).apply(lambda s: ''.join(s), axis=1)
+        colors = np.array(plt.rcParams['axes.color_cycle'])[[0, 2, 4]]
+    gc = pd.concat([a, b], axis=1).dropna().astype(int).astype(str).apply(lambda s: ''.join(s), axis=1)
     v = venn2(gc.value_counts().sort_index()[1:], set_labels=[b.name, a.name], normalize_to=1.0)
     v.patches[0].set_facecolor(colors[0])
     v.patches[1].set_facecolor(colors[1])

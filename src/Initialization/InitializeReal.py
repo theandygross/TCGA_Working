@@ -35,7 +35,7 @@ def extract_pc_filtered(df, pc_threshold=.2, filter_down=True):
         df_n = df.xs('01', axis=1, level=1)
         df_n = ((df_n.T - m) / s).T
         df_n = df_n.ix[true_index(rr.p < .05)]
-    else: #No matched normals
+    else:  # No matched normals
         df_n = df.xs('01', axis=1, level=1)
         df_n = ((df_n.T - df_n.mean(1)) / df_n.std(1)).T
     pc = extract_pc(df_n, pc_threshold, standardize=False)
@@ -43,25 +43,25 @@ def extract_pc_filtered(df, pc_threshold=.2, filter_down=True):
 
 def extract_geneset_pcs(df, gene_sets, filter_down=True):
     '''Extract PCs for all gene sets.'''
-    pc = {p: extract_pc_filtered(df.ix[g].dropna(), .2, filter_down) for p,g, 
+    pc = {p: extract_pc_filtered(df.ix[g].dropna(), .2, filter_down) for p, g,
           in gene_sets.iteritems()}
-    pc = pd.DataFrame({p: s for p,s in pc.iteritems() if s}).T
+    pc = pd.DataFrame({p: s for p, s in pc.iteritems() if s}).T
     pat_vec = pd.DataFrame(pc.pat_vec.to_dict()).T
     return pc.gene_vec, pc.pct_var, pat_vec
 
 def get_mirna_features(df):
-    binary = (df[(df < -1).sum(1) > (df.shape[1]/2)] >= -1)*1.
-    binary = binary[binary.sum(1).isin(range(20, df.shape[1]/2))]
+    binary = (df[(df < -1).sum(1) > (df.shape[1] / 2)] >= -1) * 1.
+    binary = binary[binary.sum(1).isin(range(20, df.shape[1] / 2))]
     
     real = df[((df.max(1) - df.min(1)) > 2)]
-    real = real.ix[(real == -3).sum(1) < real.shape[1]/2.]
-    features = pd.concat([real, binary], keys=['real','binary'])
+    real = real.ix[(real == -3).sum(1) < real.shape[1] / 2.]
+    features = pd.concat([real, binary], keys=['real', 'binary'])
     return features
 
 def extract_features(df):
     df_n = df.xs('01', level=1, axis=1)
     binary = df_n > -1
-    binary = binary[binary.sum(1).isin(range(20, df.shape[1]/2))]
+    binary = binary[binary.sum(1).isin(range(20, df.shape[1] / 2))]
     rr = df.ix[binary.index].apply(exp_change, 1)
     binary = binary.ix[true_index(rr.p < .05)]
     
@@ -78,18 +78,18 @@ class RealDataset(Dataset):
     data.
     '''
     def __init__(self, run, cancer, data_type, patients=None, drop_pc1=False,
-                 create_real_features=True, create_meta_features=True, 
+                 create_real_features=True, create_meta_features=True,
                  filter_down=True, draw_figures=False):
         '''
         '''
         Dataset.__init__(self, cancer.path, data_type, compressed=True)
-        self.df = IM.read_data(run.data_path, cancer.name, data_type, 
+        self.df = IM.read_data(run.data_path, cancer.name, data_type,
                                tissue_code='All')
         if patients is not None:
             self.df = self.df.ix[:, patients].dropna(axis=1, how='all')
             self.patients = patients
         else:
-            self.patients = self.df.xs('01',1,1).columns
+            self.patients = self.df.xs('01', 1, 1).columns
         
         self.global_vars = pd.DataFrame(index=self.patients)
         self.features = {}
@@ -130,7 +130,7 @@ class RealDataset(Dataset):
         gs = extract_geneset_pcs(self.df, gene_sets, filter_down)
         self.loadings, self.pct_var, pathways = gs
         if hasattr(self.global_vars, 'background'):
-            r = screen_feature(self.global_vars.background, pearson_pandas, 
+            r = screen_feature(self.global_vars.background, pearson_pandas,
                                pathways)
             pathways = pathways.ix[r.p > 10e-5]
         pathways = ((pathways.T - pathways.mean(1)) / pathways.std(1)).T
@@ -152,7 +152,7 @@ class RealDataset(Dataset):
         '''
         df = self.df.xs('01', axis=1, level=1)
         norm = ((df.T - df.mean(1)) / df.std(1)).T
-        U,S,vH = frame_svd(norm)
+        U, S, vH = frame_svd(norm)
         self.global_vars['pc1'] = vH[0]
         self.global_vars['pc2'] = vH[1]
         self.global_loadings['pc1'] = U[0]
@@ -173,10 +173,10 @@ class RealDataset(Dataset):
             os.makedirs(pathway_plot_folder)
             
         for feature in self.features.index:
-            fig, axs = subplots(1,2, figsize=(10,3))
+            fig, axs = subplots(1, 2, figsize=(10, 3))
             self.loadings.ix[feature].order().plot(kind='bar', ax=axs[0])
-            axs[0].annotate('Explained Variation: %.2f' % self.pct_var[feature], 
-                            (.03,.97), xycoords='axes fraction', ha='left', va='top')
+            axs[0].annotate('Explained Variation: %.2f' % self.pct_var[feature],
+                            (.03, .97), xycoords='axes fraction', ha='left', va='top')
             axs[0].set_ylabel('Eigen-Patient Loading')
             self.features.ix[feature].hist(ax=axs[1])
             axs[1].set_xlabel('Eigen-Gene Loading')
@@ -184,9 +184,9 @@ class RealDataset(Dataset):
             fig.savefig(pathway_plot_folder + feature)
             
         
-def initialize_real(cancer_type, report_path, data_type, patients=None, 
-                    drop_pc1=False, create_real_features=True, 
-                    create_meta_features=True, filter_down=False, 
+def initialize_real(cancer_type, report_path, data_type, patients=None,
+                    drop_pc1=False, create_real_features=True,
+                    create_meta_features=True, filter_down=False,
                     draw_figures=False, save=True):
     '''
     Initialize real-valued data for down-stream analysis.
@@ -196,10 +196,10 @@ def initialize_real(cancer_type, report_path, data_type, patients=None,
     
     if data_type is 'miRNASeq':
         create_meta_features = False
-        draw_figures=False
+        draw_figures = False
     
-    data = RealDataset(run, cancer, data_type, patients, drop_pc1, 
-                       create_real_features, create_meta_features, filter_down, 
+    data = RealDataset(run, cancer, data_type, patients, drop_pc1,
+                       create_real_features, create_meta_features, filter_down,
                        draw_figures)
 
     if save is True:

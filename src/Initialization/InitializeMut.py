@@ -25,7 +25,7 @@ def is_one_gene(genes, df):
 def size_filter(s, min_pat=10):
     '''Test if all sufficient feature diversity'''
     vc = s.clip_upper(1.).value_counts()
-    return (len(vc)== 2) and (vc.min() >= min_pat)
+    return (len(vc) == 2) and (vc.min() >= min_pat)
 
 
 class MutDataset(Dataset):
@@ -33,7 +33,7 @@ class MutDataset(Dataset):
     Inherits from Dataset class.  Adds some added processing for mutation
     data.
     '''
-    def __init__(self, run, cancer, patients=None, 
+    def __init__(self, run, cancer, patients=None,
                  create_features=True, draw_figures=False):
         '''
         '''
@@ -54,13 +54,13 @@ class MutDataset(Dataset):
         Create hit_matrix and meta_matrix, filter out genes for features.
         '''
         hit_matrix = self.df.fillna(0).clip_upper(1.)
-        meta_matrix = DataFrame({p: self.df.ix[g].sum() for p,g in 
+        meta_matrix = DataFrame({p: self.df.ix[g].sum() for p, g in 
                                  gene_sets.iteritems()}).T
         meta_matrix = meta_matrix.fillna(0).clip_upper(1.)
         meta_matrix = meta_matrix.dropna()
         s = meta_matrix.apply(size_filter, args=(min_size,), axis=1)
         meta_matrix = meta_matrix.ix[s]
-        #s = Series({p: is_one_gene(gene_sets[p], hit_matrix) for p in 
+        # s = Series({p: is_one_gene(gene_sets[p], hit_matrix) for p in 
         #            meta_matrix.index})
         s = [p for p in meta_matrix.index 
              if is_one_gene(gene_sets[p], hit_matrix) == False]
@@ -80,17 +80,17 @@ class MutDataset(Dataset):
         if not os.path.isdir(pathway_plot_folder):
             os.makedirs(pathway_plot_folder)
                 
-        for i,p in enumerate(meta_features):
+        for i, p in enumerate(meta_features):
             df = self.df.ix[gene_sets[p]]
             pathway_plot(df) 
             savefig(pathway_plot_folder + p)
             
             plt.close()
             plt.gcf().clf()
-            if (i%20) == 0:
+            if (i % 20) == 0:
                 gc.collect()
                 
-def initialize_mut(cancer_type, report_path, patients=None, 
+def initialize_mut(cancer_type, report_path, patients=None,
                    create_meta_features=True, draw_figures=False, save=True):
     '''
     Initialize mutation data for down-stream analysis.
@@ -98,7 +98,7 @@ def initialize_mut(cancer_type, report_path, patients=None,
     run = pickle.load(open(report_path + '/RunObject.p', 'rb'))
     cancer = run.load_cancer(cancer_type)
     
-    data = MutDataset(run, cancer, patients, create_meta_features, 
+    data = MutDataset(run, cancer, patients, create_meta_features,
                       draw_figures)
         
     if save is True:
